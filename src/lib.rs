@@ -27,7 +27,7 @@ impl DataElement {
     }
 }
 
-pub fn parse_data_element_registry() -> Result<Vec<DataElement>, Box<dyn Error>> {
+pub fn parse_data_element_registry() -> Result<Vec<DataElement>, Box<Error>> {
     let document = download_part_6()?;
 
     let mut data_elements = Vec::new();
