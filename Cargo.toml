@@ -1,7 +1,9 @@
 [package]
-name = "dictionary_parser"
+name = "dicom_dictionary_parser"
 version = "0.1.0"
-authors = ["Robert Habrich <habrich@image-systems.biz>"]
+authors = ["Robert Habrich <r.habrich@googlemail.com>"]
+license = "MIT"
+keywords = ["dicom"]
 
 [dependencies]
 

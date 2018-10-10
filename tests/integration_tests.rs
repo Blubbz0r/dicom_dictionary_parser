@@ -1,8 +1,8 @@
-extern crate dictionary_parser;
+extern crate dicom_dictionary_parser as dict_parser;
 
 #[test]
 fn test_parse_data_element_registry() {
-    match dictionary_parser::parse_data_element_registry() {
+    match dict_parser::parse_data_element_registry() {
         Ok(elements) => {
             // 1000 is pretty random... just checking that we have
             // successfully parsed quite a bit of data and don't want
@@ -31,7 +31,7 @@ fn test_parse_data_element_registry() {
 
 #[test]
 fn test_parse_file_meta_element_registry() {
-    match dictionary_parser::parse_file_meta_element_registry() {
+    match dict_parser::parse_file_meta_element_registry() {
         Ok(elements) => {
             // 10 is pretty random... just checking that we have
             // successfully parsed quite a bit of data and don't want
