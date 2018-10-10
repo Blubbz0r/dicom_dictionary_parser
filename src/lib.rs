@@ -27,6 +27,9 @@ impl DataElement {
     }
 }
 
+// TODO: provide single function that returns all data elements to avoid download file multiple times
+// TODO: allow to pass in a local xml file
+
 // Note: returns ALL data elements from the dictionary including elements:
 // * without name/keyword (e.g. 0018,0061)
 // * with tags defining ranges (e.g. EscapeTriplet -> "(1000,xxx0)")
@@ -37,17 +40,67 @@ impl DataElement {
 // function name.
 pub fn parse_data_element_registry() -> Result<Vec<DataElement>, Box<Error>> {
     let document = download_part_6()?;
-
-    let mut data_elements = Vec::new();
-
     let root = xmltree::Element::parse(document.as_bytes())?;
-    let chapter_6_table_body = match find_chapter_6_table_body(&root) {
+    let chapter_6_table_body = match find_chapter_table_body(&root, "6") {
         Some(element) => element,
         None => return Err(From::from("Unable to find chapter 6 table body.")),
     };
 
+    parse_data_elements(&chapter_6_table_body)
+}
+
+pub fn parse_file_meta_element_registry() -> Result<Vec<DataElement>, Box<Error>> {
+    let document = download_part_6()?;
+    let root = xmltree::Element::parse(document.as_bytes())?;
+    let chapter_7_table_body = match find_chapter_table_body(&root, "7") {
+        Some(element) => element,
+        None => return Err(From::from("Unable to find chapter 7 table body.")),
+    };
+
+    parse_data_elements(&chapter_7_table_body)
+}
+
+fn download_part_6() -> Result<String, Box<Error>> {
+    let mut response = reqwest::get(
+        "http://dicom.nema.org/medical/dicom/current/source/docbook/part06/part06.xml",
+    )?;
+    let mut content = String::new();
+    response.read_to_string(&mut content)?;
+    Ok(content)
+}
+
+fn find_chapter_table_body<'a>(
+    root: &'a xmltree::Element,
+    chapter_name: &str,
+) -> Option<&'a xmltree::Element> {
+    for child in &root.children {
+        if child.name == "chapter" {
+            let label_attribute = match child.attributes.get("label") {
+                Some(a) => a,
+                None => continue,
+            };
+            if label_attribute == chapter_name {
+                for grand_child in &child.children {
+                    if grand_child.name == "table" {
+                        for grand_grand_child in &grand_child.children {
+                            if grand_grand_child.name == "tbody" {
+                                return Some(grand_grand_child);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    None
+}
+
+fn parse_data_elements(table_body: &xmltree::Element) -> Result<Vec<DataElement>, Box<Error>> {
+    let mut data_elements = Vec::new();
+
     // xml underneath chapter 6 tbody is <tr><td><para></para></td><td>...</tr>
-    for tr in &chapter_6_table_body.children {
+    for tr in &table_body.children {
         let mut data_element = DataElement::new();
         let mut counter = 0;
         for td in &tr.children {
@@ -95,37 +148,4 @@ pub fn parse_data_element_registry() -> Result<Vec<DataElement>, Box<Error>> {
     }
 
     Ok(data_elements)
-}
-
-fn download_part_6() -> Result<String, Box<Error>> {
-    let mut response = reqwest::get(
-        "http://dicom.nema.org/medical/dicom/current/source/docbook/part06/part06.xml",
-    )?;
-    let mut content = String::new();
-    response.read_to_string(&mut content)?;
-    Ok(content)
-}
-
-fn find_chapter_6_table_body(root: &xmltree::Element) -> Option<&xmltree::Element> {
-    for child in &root.children {
-        if child.name == "chapter" {
-            let label_attribute = match child.attributes.get("label") {
-                Some(a) => a,
-                None => continue,
-            };
-            if label_attribute == "6" {
-                for grand_child in &child.children {
-                    if grand_child.name == "table" {
-                        for grand_grand_child in &grand_child.children {
-                            if grand_grand_child.name == "tbody" {
-                                return Some(grand_grand_child);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    None
 }
