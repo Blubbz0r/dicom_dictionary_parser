@@ -27,6 +27,14 @@ impl DataElement {
     }
 }
 
+// Note: returns ALL data elements from the dictionary including elements:
+// * without name/keyword (e.g. 0018,0061)
+// * with tags defining ranges (e.g. EscapeTriplet -> "(1000,xxx0)")
+// * without VR (e.g. Item -> "(FFFE,E000)")
+//
+// Note: Keyword of returned data elements contain zero-width space ("\u{200b}").
+// These are kept to make it easier to convert the keyword e.g. to a snake-cased
+// function name.
 pub fn parse_data_element_registry() -> Result<Vec<DataElement>, Box<Error>> {
     let document = download_part_6()?;
 
@@ -59,7 +67,14 @@ pub fn parse_data_element_registry() -> Result<Vec<DataElement>, Box<Error>> {
             match counter {
                 0 => data_element.tag = text.unwrap(),
                 1 => data_element.name = text.unwrap(),
-                2 => data_element.keyword = text.unwrap().replace("\u{200b}", ""), // keyword have zero-width spaces in them...
+                2 => {
+                    let text = text.unwrap();
+                    // some empty keywords with emphasis element have a CRLF as value...
+                    // this seems to be parsed as "1"... we ignore it
+                    if text != "1" {
+                        data_element.keyword = text;
+                    }
+                }
                 3 => {
                     let vr = text.unwrap();
                     // TODO: not too clean... tags like "Item" have the text "See Note 2" as VR

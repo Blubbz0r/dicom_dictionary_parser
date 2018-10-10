@@ -13,7 +13,7 @@ fn test_parse_data_element_registry() {
             let length_to_end = &elements[0];
             assert_eq!(length_to_end.tag, "(0008,0001)");
             assert_eq!(length_to_end.name, "Length to End");
-            assert_eq!(length_to_end.keyword, "LengthToEnd");
+            assert_eq!(length_to_end.keyword, "Length\u{200b}To\u{200b}End");
             assert_eq!(length_to_end.vr, "UL");
             assert_eq!(length_to_end.vm, "1");
             assert_eq!(length_to_end.comment, Some("RET".to_string()));
