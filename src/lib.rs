@@ -1,31 +1,12 @@
+pub mod data_element;
+
+pub use data_element::DataElement;
+
 extern crate reqwest;
 extern crate xmltree;
 
 use std::error::Error;
 use std::io::Read;
-
-#[derive(Debug)]
-pub struct DataElement {
-    pub tag: String,
-    pub name: String,
-    pub keyword: String,
-    pub vr: String,
-    pub vm: String,
-    pub comment: Option<String>,
-}
-
-impl DataElement {
-    pub fn new() -> DataElement {
-        DataElement {
-            tag: String::new(),
-            name: String::new(),
-            keyword: String::new(),
-            vr: String::new(),
-            vm: String::new(),
-            comment: None,
-        }
-    }
-}
 
 // TODO: provide single function that returns all data elements to avoid download file multiple times
 // TODO: allow to pass in a local xml file
