@@ -1,5 +1,7 @@
 extern crate dicom_dictionary_parser as dict_parser;
 
+// TODO: file-based tests... these allow to check correctly for total size of return and test of specific elements (e.g. empty ones)
+
 #[test]
 fn test_parse_data_element_registry() {
     let parser = dict_parser::Parser::new().unwrap();

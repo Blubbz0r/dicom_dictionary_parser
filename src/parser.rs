@@ -8,38 +8,63 @@ use DataElement;
 use reqwest;
 use xmltree;
 
+/// A parser for the data elements defined in various tables in the DICOM
+/// standard (part 6 "Data Dictionary").
 pub struct Parser {
     /// Holds the contents of the DICOM standard part 6 xml file once read.
     part6_content: String,
 }
 
 impl Parser {
-    pub fn new() -> Result<Parser, Box<Error>> {
+    /// Creates a new `Parser` instance with a downloaded version of the
+    /// current part 6 of the DICOM standard.
+    ///
+    /// # Errors
+    ///
+    /// This function fails if:
+    ///
+    /// * Downloading part6.xml fails
+    /// * Reading the downloaded part6.xml fails
+    pub fn new() -> Result<Self, Box<Error>> {
         Ok(Parser {
             part6_content: Self::download_part_6()?,
         })
     }
 
-    pub fn with_part6_file(file_path: &Path) -> Result<Parser, Box<Error>> {
+    /// Creates a new `Parser` instance using the part6.xml given as `file_path`.
+    ///
+    /// # Errors
+    ///
+    /// This function fails if:
+    ///
+    /// * Opening the file at `file_path` fails
+    /// * Reading the file at `file_path` fails
+    pub fn with_part6_file(file_path: &Path) -> Result<Parser, ::std::io::Error> {
         let mut file = File::open(file_path)?;
-        let mut content = String::new();
-        file.read_to_string(&mut content)?;
         Ok(Parser {
-            part6_content: content,
+            part6_content: Self::read_content(&mut file)?,
         })
     }
 
-    // TODO: provide single function that returns all data elements to avoid download file multiple times
-    // TODO: allow to pass in a local xml file
-
-    // Note: returns ALL data elements from the dictionary including elements:
-    // * without name/keyword (e.g. 0018,0061)
-    // * with tags defining ranges (e.g. EscapeTriplet -> "(1000,xxx0)")
-    // * without VR (e.g. Item -> "(FFFE,E000)")
-    //
-    // Note: Keyword of returned data elements contain zero-width space ("\u{200b}").
-    // These are kept to make it easier to convert the keyword e.g. to a snake-cased
-    // function name.
+    /// Returns all data elements defined in the "Registry of DICOM Data
+    /// Elements" table of the DICOM standard.
+    ///
+    /// Note that **all** data elemnts from the dictionary are returned,
+    /// including elements:
+    ///
+    /// * without name/keyword (e.g. "(0018,0061)""
+    /// * with tags defining ranges (e.g. "EscapeTriplet" -> "(1000,xxx0)")
+    /// * without VR (e.g. "Item" -> "(FFFE,E000)")
+    ///
+    /// # Errors
+    ///
+    /// This function fails if:
+    ///
+    /// * Parsing of the part6.xml fails
+    /// * The table element of the "Registry of DICOM Data Elements" chapter
+    /// cannot be found
+    /// * The format of how values are stored in part6.xml has changed and this
+    /// function is no longer able to parse it appropriately
     pub fn parse_data_element_registry(&self) -> Result<Vec<DataElement>, Box<Error>> {
         let root = xmltree::Element::parse(self.part6_content.as_bytes())?;
         let chapter_6_table_body = match Self::find_chapter_table_body(&root, "6") {
@@ -50,6 +75,18 @@ impl Parser {
         Self::parse_data_elements(&chapter_6_table_body)
     }
 
+    /// Returns all file meta elements defined in the "Registry of DICOM File
+    /// Meta Elements" table of the DICOM standard.
+    ///
+    /// # Errors
+    ///
+    /// This function fails if:
+    ///
+    /// * Parsing of the part6.xml fails
+    /// * The table element of the "Registry of DICOM File Meta Elements"
+    /// chapter cannot be found
+    /// * The format of how values are stored in part6.xml has changed and this
+    /// function is no longer able to parse it appropriately
     pub fn parse_file_meta_element_registry(&self) -> Result<Vec<DataElement>, Box<Error>> {
         let root = xmltree::Element::parse(self.part6_content.as_bytes())?;
         let chapter_7_table_body = match Self::find_chapter_table_body(&root, "7") {
@@ -65,9 +102,7 @@ impl Parser {
             "http://dicom.nema.org/medical/dicom/current/source/docbook/part06/part06.xml",
         )?;
 
-        let mut content = String::new();
-        response.read_to_string(&mut content)?;
-        Ok(content)
+        Self::read_content(&mut response).map_err(|e| e.into())
     }
 
     fn find_chapter_table_body<'a>(
@@ -149,5 +184,11 @@ impl Parser {
         }
 
         Ok(data_elements)
+    }
+
+    fn read_content<R: Read>(reader: &mut R) -> Result<String, ::std::io::Error> {
+        let mut content = String::new();
+        reader.read_to_string(&mut content)?;
+        Ok(content)
     }
 }

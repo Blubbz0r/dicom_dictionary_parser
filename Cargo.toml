@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Robert Habrich <r.habrich@googlemail.com>"]
 license = "MIT"
 keywords = ["dicom"]
+readme ="README.md"
 
 [dependencies]
 
