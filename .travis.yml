@@ -1,0 +1,31 @@
+language: rust
+
+rust:
+  - stable
+  - beta
+  - nightly
+
+matrix:
+  include:
+    # Windows
+    - env: TARGET=x86_64-pc-windows-msvc
+
+    # Linux
+    - env: TARGET=x86_64-unknown-linux-gnu
+    
+  allow_failures:
+    - rust: nightly
+  fast_finish: true
+
+before_install:
+  - rustup self update
+
+script:
+  - cargo build --verbose --all
+  - cargo test --verbose --all
+
+cache: cargo
+
+notifications:
+  email:
+    on_success: never
