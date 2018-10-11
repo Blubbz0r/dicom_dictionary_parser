@@ -26,7 +26,7 @@ impl Parser {
     /// * Downloading part6.xml fails
     /// * Reading the downloaded part6.xml fails
     pub fn new() -> Result<Self, Box<Error>> {
-        Ok(Parser {
+        Ok(Self {
             part6_content: Self::download_part_6()?,
         })
     }
@@ -39,11 +39,18 @@ impl Parser {
     ///
     /// * Opening the file at `file_path` fails
     /// * Reading the file at `file_path` fails
-    pub fn with_part6_file(file_path: &Path) -> Result<Parser, ::std::io::Error> {
+    pub fn with_part6_file(file_path: &Path) -> Result<Self, ::std::io::Error> {
         let mut file = File::open(file_path)?;
-        Ok(Parser {
+        Ok(Self {
             part6_content: Self::read_content(&mut file)?,
         })
+    }
+
+    /// Creates a new `Parser` instance given the full `contents` of a part6.xml file.
+    pub fn with_part6_file_contents(contents: String) -> Self {
+        Self {
+            part6_content: contents,
+        }
     }
 
     /// Returns all data elements defined in the "Registry of DICOM Data
@@ -52,7 +59,7 @@ impl Parser {
     /// Note that **all** data elemnts from the dictionary are returned,
     /// including elements:
     ///
-    /// * without name/keyword (e.g. "(0018,0061)""
+    /// * without name/keyword (e.g. "(0018,0061)")
     /// * with tags defining ranges (e.g. "EscapeTriplet" -> "(1000,xxx0)")
     /// * without VR (e.g. "Item" -> "(FFFE,E000)")
     ///
@@ -149,21 +156,17 @@ impl Parser {
                 }
 
                 let text = para.text.clone();
+
+                // name, keyword, vr and/or vm is empty for a handful of elements...
                 if text.is_none() && counter != 5 {
+                    counter += 1;
                     continue;
                 }
 
                 match counter {
                     0 => data_element.tag = text.unwrap(),
                     1 => data_element.name = text.unwrap(),
-                    2 => {
-                        let text = text.unwrap();
-                        // some empty keywords with emphasis element have a CRLF as value...
-                        // this seems to be parsed as "1"... we ignore it
-                        if text != "1" {
-                            data_element.keyword = text;
-                        }
-                    }
+                    2 => data_element.keyword = text.unwrap(),
                     3 => {
                         let vr = text.unwrap();
                         // TODO: not too clean... tags like "Item" have the text "See Note 2" as VR

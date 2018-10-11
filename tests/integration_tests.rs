@@ -1,15 +1,75 @@
 extern crate dicom_dictionary_parser as dict_parser;
 
-// TODO: file-based tests... these allow to check correctly for total size of return and test of specific elements (e.g. empty ones)
+fn parser_from_file() -> dict_parser::Parser {
+    let part6_contents = include_bytes!("part06.xml");
+    dict_parser::Parser::with_part6_file_contents(
+        String::from_utf8_lossy(part6_contents).to_string(),
+    )
+}
 
 #[test]
-fn test_parse_data_element_registry() {
+fn parse_data_element_registry_from_file() {
+    let parser = parser_from_file();
+    match parser.parse_data_element_registry() {
+        Ok(elements) => {
+            assert_eq!(elements.len(), 4266);
+
+            let item_delimitation_item = &elements[4264];
+            assert_eq!(item_delimitation_item.tag, "(FFFE,E00D)");
+            assert_eq!(item_delimitation_item.name, "Item Delimitation Item");
+            assert_eq!(
+                item_delimitation_item.keyword,
+                "Item\u{200b}Delimitation\u{200b}Item"
+            );
+            assert_eq!(item_delimitation_item.vr, "");
+            assert_eq!(item_delimitation_item.vm, "1");
+            assert!(item_delimitation_item.comment.is_none());
+
+            let escape_triplet = &elements[3298];
+            assert_eq!(escape_triplet.tag, "(1000,xxx0)");
+
+            let unnamed_element = &elements[537];
+            assert_eq!(unnamed_element.tag, "(0018,0061)");
+            assert!(unnamed_element.name.is_empty());
+            assert!(unnamed_element.keyword.is_empty());
+            assert_eq!(unnamed_element.vr, "DS");
+            assert_eq!(unnamed_element.vm, "1");
+            assert_eq!(unnamed_element.comment, Some("RET".to_string()));
+        }
+        Err(e) => assert!(false, e.to_string()),
+    }
+}
+
+#[test]
+fn parse_file_meta_element_registry_from_file() {
+    let parser = parser_from_file();
+    match parser.parse_file_meta_element_registry() {
+        Ok(elements) => {
+            assert_eq!(elements.len(), 12);
+
+            let transfer_syntax_uid = &elements[4];
+            assert_eq!(transfer_syntax_uid.tag, "(0002,0010)");
+            assert_eq!(transfer_syntax_uid.name, "Transfer Syntax UID");
+            assert_eq!(
+                transfer_syntax_uid.keyword,
+                "Transfer\u{200b}Syntax\u{200b}UID"
+            );
+            assert_eq!(transfer_syntax_uid.vr, "UI");
+            assert_eq!(transfer_syntax_uid.vm, "1");
+            assert!(transfer_syntax_uid.comment.is_none());
+        }
+        Err(e) => assert!(false, e.to_string()),
+    }
+}
+
+#[test]
+fn parse_data_element_registry_from_downloaded_dict() {
     let parser = dict_parser::Parser::new().unwrap();
     match parser.parse_data_element_registry() {
         Ok(elements) => {
             // 1000 is pretty random... just checking that we have
-            // successfully parsed quite a bit of data and don't want
-            // to hard-code the current total number of data elements
+            // successfully parsed quite a bit of data. exact test
+            // is done against an actual xml file above
             assert!(elements.len() > 1000);
 
             // checking some random data elements
@@ -25,21 +85,19 @@ fn test_parse_data_element_registry() {
             assert_eq!(specific_character_set.tag, "(0008,0005)");
             assert_eq!(specific_character_set.vm, "1-n");
             assert!(specific_character_set.comment.is_none());
-
-            // TODO: add test for special cases ("See Note", "<emphasis> sub element", "1" hack)
         }
         Err(e) => assert!(false, e.to_string()),
     }
 }
 
 #[test]
-fn test_parse_file_meta_element_registry() {
+fn parse_file_meta_element_registry_from_downloaded_dict() {
     let parser = dict_parser::Parser::new().unwrap();
     match parser.parse_file_meta_element_registry() {
         Ok(elements) => {
             // 10 is pretty random... just checking that we have
-            // successfully parsed quite a bit of data and don't want
-            // to hard-code the current total number of file meta elements
+            // successfully parsed quite a bit of data. exact test
+            // is done against an actual xml file above
             assert!(elements.len() > 10);
 
             // checking some random file meta elements
