@@ -6,6 +6,8 @@ authors = ["Robert Habrich <r.habrich@googlemail.com>"]
 license = "MIT"
 keywords = ["dicom"]
 readme ="README.md"
+homepage = "https://github.com/Blubbz0r/dicom_dictionary_parser"
+repository = "https://github.com/Blubbz0r/dicom_dictionary_parser"
 
 [dependencies]
 
