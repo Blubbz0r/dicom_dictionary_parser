@@ -1,5 +1,9 @@
 extern crate dicom_dictionary_parser as dict_parser;
 
+// Note: this contains tests against the "part06.xml" file that this lib was
+// coded against as well as tests against a downloaded version of part 6 to
+// prove that it still works for the current format.
+
 fn parser_from_file() -> dict_parser::Parser {
     let part6_contents = include_bytes!("part06.xml");
     dict_parser::Parser::with_part6_file_contents(
@@ -136,6 +140,29 @@ fn parse_directory_structuring_elements_from_file() {
             assert_eq!(item_delimitation_item.vr, "US");
             assert_eq!(item_delimitation_item.vm, "1");
             assert!(item_delimitation_item.comment.is_none());
+        }
+        Err(e) => assert!(false, e.to_string()),
+    }
+}
+
+#[test]
+fn parse_directory_structuring_elements_from_downloaded_dict() {
+    let parser = dict_parser::Parser::new().unwrap();
+    match parser.parse_directory_structuring_elements() {
+        Ok(elements) => {
+            // 10 is pretty random... just checking that we have
+            // successfully parsed quite a bit of data. exact test
+            // is done against an actual xml file above
+            assert!(elements.len() > 10);
+
+            // checking some random element
+            let file_set_id = &elements[0];
+            assert_eq!(file_set_id.tag, "(0004,1130)");
+            assert_eq!(file_set_id.name, "File-set ID");
+            assert_eq!(file_set_id.keyword, "File\u{200b}Set\u{200b}ID");
+            assert_eq!(file_set_id.vr, "CS");
+            assert_eq!(file_set_id.vm, "1");
+            assert!(file_set_id.comment.is_none());
         }
         Err(e) => assert!(false, e.to_string()),
     }
