@@ -104,6 +104,18 @@ impl Parser {
         Self::parse_data_elements(&chapter_7_table_body)
     }
 
+    /// Returns all file meta elements defined in the "Registry of DICOM
+    /// Directory Structuring Elements" table of the DICOM standard.
+    ///
+    /// # Errors
+    ///
+    /// This function fails if:
+    ///
+    /// * Parsing of the part6.xml fails
+    ///   * The table element of the "Registry of DICOM Directory Structuring
+    /// Elements" chapter cannot be found
+    ///   * The format of how values are stored in part6.xml has changed and this
+    /// function is no longer able to parse it appropriately
     pub fn parse_directory_structuring_elements(&self) -> Result<Vec<DataElement>, Box<Error>> {
         let root = xmltree::Element::parse(self.part6_content.as_bytes())?;
         let chapter_8_table_body = match Self::find_chapter_table_body(&root, "8") {
