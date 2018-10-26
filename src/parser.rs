@@ -68,9 +68,9 @@ impl Parser {
     /// This function fails if:
     ///
     /// * Parsing of the part6.xml fails
-    /// * The table element of the "Registry of DICOM Data Elements" chapter
+    ///   * The table element of the "Registry of DICOM Data Elements" chapter
     /// cannot be found
-    /// * The format of how values are stored in part6.xml has changed and this
+    ///   * The format of how values are stored in part6.xml has changed and this
     /// function is no longer able to parse it appropriately
     pub fn parse_data_element_registry(&self) -> Result<Vec<DataElement>, Box<Error>> {
         let root = xmltree::Element::parse(self.part6_content.as_bytes())?;
@@ -90,9 +90,9 @@ impl Parser {
     /// This function fails if:
     ///
     /// * Parsing of the part6.xml fails
-    /// * The table element of the "Registry of DICOM File Meta Elements"
+    ///   * The table element of the "Registry of DICOM File Meta Elements"
     /// chapter cannot be found
-    /// * The format of how values are stored in part6.xml has changed and this
+    ///   * The format of how values are stored in part6.xml has changed and this
     /// function is no longer able to parse it appropriately
     pub fn parse_file_meta_element_registry(&self) -> Result<Vec<DataElement>, Box<Error>> {
         let root = xmltree::Element::parse(self.part6_content.as_bytes())?;
