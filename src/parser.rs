@@ -73,13 +73,7 @@ impl Parser {
     ///   * The format of how values are stored in part6.xml has changed and this
     /// function is no longer able to parse it appropriately
     pub fn parse_data_element_registry(&self) -> Result<Vec<DataElement>, Box<Error>> {
-        let root = xmltree::Element::parse(self.part6_content.as_bytes())?;
-        let chapter_6_table_body = match Self::find_chapter_table_body(&root, "6") {
-            Some(element) => element,
-            None => return Err(From::from("Unable to find chapter 6 table body.")),
-        };
-
-        Self::parse_data_elements(&chapter_6_table_body)
+        self.parse_data_elements("6")
     }
 
     /// Returns all file meta elements defined in the "Registry of DICOM File
@@ -95,13 +89,7 @@ impl Parser {
     ///   * The format of how values are stored in part6.xml has changed and this
     /// function is no longer able to parse it appropriately
     pub fn parse_file_meta_element_registry(&self) -> Result<Vec<DataElement>, Box<Error>> {
-        let root = xmltree::Element::parse(self.part6_content.as_bytes())?;
-        let chapter_7_table_body = match Self::find_chapter_table_body(&root, "7") {
-            Some(element) => element,
-            None => return Err(From::from("Unable to find chapter 7 table body.")),
-        };
-
-        Self::parse_data_elements(&chapter_7_table_body)
+        self.parse_data_elements("7")
     }
 
     /// Returns all file meta elements defined in the "Registry of DICOM
@@ -117,13 +105,7 @@ impl Parser {
     ///   * The format of how values are stored in part6.xml has changed and this
     /// function is no longer able to parse it appropriately
     pub fn parse_directory_structuring_elements(&self) -> Result<Vec<DataElement>, Box<Error>> {
-        let root = xmltree::Element::parse(self.part6_content.as_bytes())?;
-        let chapter_8_table_body = match Self::find_chapter_table_body(&root, "8") {
-            Some(element) => element,
-            None => return Err(From::from("Unable to find chapter 8 table body.")),
-        };
-
-        Self::parse_data_elements(&chapter_8_table_body)
+        self.parse_data_elements("8")
     }
 
     fn download_part_6() -> Result<String, Box<Error>> {
@@ -134,38 +116,22 @@ impl Parser {
         Self::read_content(&mut response).map_err(|e| e.into())
     }
 
-    fn find_chapter_table_body<'a>(
-        root: &'a xmltree::Element,
-        chapter_name: &str,
-    ) -> Option<&'a xmltree::Element> {
-        for child in &root.children {
-            if child.name == "chapter" {
-                let label_attribute = match child.attributes.get("label") {
-                    Some(a) => a,
-                    None => continue,
-                };
-                if label_attribute == chapter_name {
-                    for grand_child in &child.children {
-                        if grand_child.name == "table" {
-                            for grand_grand_child in &grand_child.children {
-                                if grand_grand_child.name == "tbody" {
-                                    return Some(grand_grand_child);
-                                }
-                            }
-                        }
-                    }
-                }
+    fn parse_data_elements(&self, chapter_label: &str) -> Result<Vec<DataElement>, Box<Error>> {
+        let root = xmltree::Element::parse(self.part6_content.as_bytes())?;
+        let chapter_table_body = match Self::find_chapter_table_body(&root, chapter_label) {
+            Some(element) => element,
+            None => {
+                return Err(From::from(format!(
+                    "Unable to find chapter {} table body.",
+                    chapter_label
+                )))
             }
-        }
+        };
 
-        None
-    }
-
-    fn parse_data_elements(table_body: &xmltree::Element) -> Result<Vec<DataElement>, Box<Error>> {
         let mut data_elements = Vec::new();
 
         // xml underneath chapter 6 tbody is <tr><td><para></para></td><td>...</tr>
-        for tr in &table_body.children {
+        for tr in &chapter_table_body.children {
             let mut data_element = DataElement::new();
             let mut counter = 0;
             for td in &tr.children {
@@ -209,6 +175,33 @@ impl Parser {
         }
 
         Ok(data_elements)
+    }
+
+    fn find_chapter_table_body<'a>(
+        root: &'a xmltree::Element,
+        chapter_name: &str,
+    ) -> Option<&'a xmltree::Element> {
+        for child in &root.children {
+            if child.name == "chapter" {
+                let label_attribute = match child.attributes.get("label") {
+                    Some(a) => a,
+                    None => continue,
+                };
+                if label_attribute == chapter_name {
+                    for grand_child in &child.children {
+                        if grand_child.name == "table" {
+                            for grand_grand_child in &grand_child.children {
+                                if grand_grand_child.name == "tbody" {
+                                    return Some(grand_grand_child);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        None
     }
 
     fn read_content<R: Read>(reader: &mut R) -> Result<String, ::std::io::Error> {
