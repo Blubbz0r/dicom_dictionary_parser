@@ -104,6 +104,16 @@ impl Parser {
         Self::parse_data_elements(&chapter_7_table_body)
     }
 
+    pub fn parse_directory_structuring_elements(&self) -> Result<Vec<DataElement>, Box<Error>> {
+        let root = xmltree::Element::parse(self.part6_content.as_bytes())?;
+        let chapter_8_table_body = match Self::find_chapter_table_body(&root, "8") {
+            Some(element) => element,
+            None => return Err(From::from("Unable to find chapter 8 table body.")),
+        };
+
+        Self::parse_data_elements(&chapter_8_table_body)
+    }
+
     fn download_part_6() -> Result<String, Box<Error>> {
         let mut response = reqwest::get(
             "http://dicom.nema.org/medical/dicom/current/source/docbook/part06/part06.xml",

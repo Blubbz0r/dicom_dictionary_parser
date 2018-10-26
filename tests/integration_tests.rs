@@ -118,3 +118,25 @@ fn parse_file_meta_element_registry_from_downloaded_dict() {
         Err(e) => assert!(false, e.to_string()),
     }
 }
+
+#[test]
+fn parse_directory_structuring_elements_from_file() {
+    let parser = parser_from_file();
+    match parser.parse_directory_structuring_elements() {
+        Ok(elements) => {
+            assert_eq!(elements.len(), 19);
+
+            let item_delimitation_item = &elements[5];
+            assert_eq!(item_delimitation_item.tag, "(0004,1212)");
+            assert_eq!(item_delimitation_item.name, "File-set Consistency Flag");
+            assert_eq!(
+                item_delimitation_item.keyword,
+                "File\u{200b}Set\u{200b}Consistency\u{200b}Flag"
+            );
+            assert_eq!(item_delimitation_item.vr, "US");
+            assert_eq!(item_delimitation_item.vm, "1");
+            assert!(item_delimitation_item.comment.is_none());
+        }
+        Err(e) => assert!(false, e.to_string()),
+    }
+}
