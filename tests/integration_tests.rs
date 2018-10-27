@@ -167,3 +167,22 @@ fn parse_directory_structuring_elements_from_downloaded_dict() {
         Err(e) => assert!(false, e.to_string()),
     }
 }
+
+#[test]
+fn parse_unique_identifiers_from_file() {
+    let parser = parser_from_file();
+    match parser.parse_unique_identifiers() {
+        Ok(uids) => {
+            assert_eq!(uids.len(), 400);
+
+            let explicit_vr_little_endian = &uids[2];
+            assert_eq!(explicit_vr_little_endian.value, "1.2.840.10008.1.2.1");
+            assert_eq!(explicit_vr_little_endian.name, "Explicit VR Little Endian");
+            assert_eq!(
+                explicit_vr_little_endian.uid_type,
+                dict_parser::UIDType::TransferSyntax
+            );
+        }
+        Err(e) => assert!(false, e.to_string()),
+    }
+}

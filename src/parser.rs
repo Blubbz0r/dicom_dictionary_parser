@@ -4,6 +4,8 @@ use std::io::Read;
 use std::path::Path;
 
 use DataElement;
+use UIDType;
+use UID;
 
 use reqwest;
 use xmltree;
@@ -108,6 +110,84 @@ impl Parser {
         self.parse_data_elements("8")
     }
 
+    pub fn parse_unique_identifiers(&self) -> Result<Vec<UID>, Box<Error>> {
+        let root = xmltree::Element::parse(self.part6_content.as_bytes())?;
+        let chapter_A_table_body = match Self::find_chapter_table_body(&root, "A") {
+            Some(element) => element,
+            None => return Err(From::from("Unable to find chapter 'A' table body.")),
+        };
+
+        let mut uids = Vec::new();
+
+        // xml underneath chapter tbody is <tr><td><para></para></td><td>...</tr>
+        for tr in &chapter_A_table_body.children {
+            let mut uid = UID::new();
+            let mut counter = 0;
+            for td in &tr.children {
+                let mut para = &td.children[0];
+                assert!(para.name == "para");
+
+                if !para.children.is_empty() && &para.children[0].name == "emphasis" {
+                    // some text is italic and thus has an extra "emphasis" sub-element...
+                    para = &para.children[0];
+                }
+
+                let text = para.text.clone();
+
+                match counter {
+                    0 => {
+                        uid.value = text.unwrap();
+
+                        // values in "UID Value" column contain zero-width spaces...
+                        // we'll trim them out
+                        uid.value = uid.value.replace("\u{200b}", "");
+                    }
+                    1 => uid.name = text.unwrap(),
+                    2 => match text.unwrap().as_ref() {
+                        "Application Context Name" => {
+                            uid.uid_type = UIDType::ApplicationContextName
+                        }
+                        "Application Hosting Model" => {
+                            uid.uid_type = UIDType::ApplicationHostingModel
+                        }
+                        "Coding Scheme" => uid.uid_type = UIDType::CodingScheme,
+                        "DICOM UIDs as a Coding Scheme" => {
+                            uid.uid_type = UIDType::DicomUidsAsCodingScheme
+                        }
+                        "LDAP OID" => uid.uid_type = UIDType::LdapOid,
+                        "Mapping Resource" => uid.uid_type = UIDType::MappingResource,
+                        "Meta SOP Class" => uid.uid_type = UIDType::MetaSopClass,
+                        "Service Class" => uid.uid_type = UIDType::ServiceClass,
+                        "SOP Class" => uid.uid_type = UIDType::SopClass,
+                        "Synchronization Frame of Reference" => {
+                            uid.uid_type = UIDType::SynchronizationFrameOfReferences
+                        }
+                        "Transfer Syntax" => uid.uid_type = UIDType::TransferSyntax,
+                        "Well-known frame of reference" => {
+                            uid.uid_type = UIDType::WellKnownFrameOfReference
+                        }
+                        "Well-known Printer SOP Instance" => {
+                            uid.uid_type = UIDType::WellKnownPrinterSopInstance
+                        }
+                        "Well-known Print Queue SOP Instance" => {
+                            uid.uid_type = UIDType::WellKnownPrintQueueSopInstance
+                        }
+                        "Well-known SOP Instance" => uid.uid_type = UIDType::WellKnownSopInstance,
+                        val @ _ => return Err(From::from(format!("Unknown UID type '{}'", val))),
+                    },
+                    3 => { /* "Part" column, which we ignore right now */ }
+                    _ => return Err(From::from("Found unexpected number of 'td' elements")),
+                }
+
+                counter += 1;
+            }
+
+            uids.push(uid);
+        }
+
+        Ok(uids)
+    }
+
     fn download_part_6() -> Result<String, Box<Error>> {
         let mut response = reqwest::get(
             "http://dicom.nema.org/medical/dicom/current/source/docbook/part06/part06.xml",
@@ -130,7 +210,7 @@ impl Parser {
 
         let mut data_elements = Vec::new();
 
-        // xml underneath chapter 6 tbody is <tr><td><para></para></td><td>...</tr>
+        // xml underneath chapter tbody is <tr><td><para></para></td><td>...</tr>
         for tr in &chapter_table_body.children {
             let mut data_element = DataElement::new();
             let mut counter = 0;
