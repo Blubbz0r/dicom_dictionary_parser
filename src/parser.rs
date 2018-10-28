@@ -106,7 +106,9 @@ impl Parser {
     /// Elements" chapter cannot be found
     ///   * The format of how values are stored in part6.xml has changed and this
     /// function is no longer able to parse it appropriately
-    pub fn parse_directory_structuring_elements(&self) -> Result<Vec<DataElement>, Box<Error>> {
+    pub fn parse_directory_structuring_element_registry(
+        &self,
+    ) -> Result<Vec<DataElement>, Box<Error>> {
         self.parse_data_elements("8")
     }
 
@@ -122,7 +124,7 @@ impl Parser {
     /// (UIDs)" chapter cannot be found
     ///   * The format of how values are stored in part6.xml has changed and this
     /// function is no longer able to parse it appropriately
-    pub fn parse_unique_identifiers(&self) -> Result<Vec<UID>, Box<Error>> {
+    pub fn parse_unique_identifier_registry(&self) -> Result<Vec<UID>, Box<Error>> {
         let root = xmltree::Element::parse(self.part6_content.as_bytes())?;
         let chapter_a_table_body = match Self::find_chapter_table_body(&root, "A") {
             Some(element) => element,

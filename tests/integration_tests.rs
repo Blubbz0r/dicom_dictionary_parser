@@ -124,9 +124,9 @@ fn parse_file_meta_element_registry_from_downloaded_dict() {
 }
 
 #[test]
-fn parse_directory_structuring_elements_from_file() {
+fn parse_directory_structuring_element_registry_from_file() {
     let parser = parser_from_file();
-    match parser.parse_directory_structuring_elements() {
+    match parser.parse_directory_structuring_element_registry() {
         Ok(elements) => {
             assert_eq!(elements.len(), 19);
 
@@ -146,9 +146,9 @@ fn parse_directory_structuring_elements_from_file() {
 }
 
 #[test]
-fn parse_directory_structuring_elements_from_downloaded_dict() {
+fn parse_directory_structuring_element_registry_from_downloaded_dict() {
     let parser = dict_parser::Parser::new().unwrap();
-    match parser.parse_directory_structuring_elements() {
+    match parser.parse_directory_structuring_element_registry() {
         Ok(elements) => {
             // 10 is pretty random... just checking that we have
             // successfully parsed quite a bit of data. exact test
@@ -169,9 +169,9 @@ fn parse_directory_structuring_elements_from_downloaded_dict() {
 }
 
 #[test]
-fn parse_unique_identifiers_from_file() {
+fn parse_unique_identifier_registry_from_file() {
     let parser = parser_from_file();
-    match parser.parse_unique_identifiers() {
+    match parser.parse_unique_identifier_registry() {
         Ok(uids) => {
             assert_eq!(uids.len(), 400);
 
@@ -188,9 +188,9 @@ fn parse_unique_identifiers_from_file() {
 }
 
 #[test]
-fn parse_unique_identifiers_from_downloaded_dict() {
+fn parse_unique_identifier_registry_from_downloaded_dict() {
     let parser = dict_parser::Parser::new().unwrap();
-    match parser.parse_unique_identifiers() {
+    match parser.parse_unique_identifier_registry() {
         Ok(uids) => {
             // 100 is pretty random... just checking that we have
             // successfully parsed quite a bit of data. exact test
