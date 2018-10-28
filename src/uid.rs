@@ -1,5 +1,5 @@
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
-pub enum UIDType {
+pub enum Kind {
     ApplicationContextName,
     ApplicationHostingModel,
     CodingScheme,
@@ -21,7 +21,7 @@ pub enum UIDType {
 pub struct UID {
     pub value: String,
     pub name: String,
-    pub uid_type: UIDType,
+    pub kind: Kind,
 }
 
 impl UID {
@@ -29,7 +29,7 @@ impl UID {
         UID {
             value: String::new(),
             name: String::new(),
-            uid_type: UIDType::TransferSyntax,
+            kind: Kind::TransferSyntax,
         }
     }
 }

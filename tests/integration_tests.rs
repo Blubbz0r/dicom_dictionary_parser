@@ -179,8 +179,8 @@ fn parse_unique_identifiers_from_file() {
             assert_eq!(explicit_vr_little_endian.value, "1.2.840.10008.1.2.1");
             assert_eq!(explicit_vr_little_endian.name, "Explicit VR Little Endian");
             assert_eq!(
-                explicit_vr_little_endian.uid_type,
-                dict_parser::UIDType::TransferSyntax
+                explicit_vr_little_endian.kind,
+                dict_parser::Kind::TransferSyntax
             );
         }
         Err(e) => assert!(false, e.to_string()),
@@ -201,10 +201,7 @@ fn parse_unique_identifiers_from_downloaded_dict() {
             let verification_sop_class = &uids[0];
             assert_eq!(verification_sop_class.value, "1.2.840.10008.1.1");
             assert_eq!(verification_sop_class.name, "Verification SOP Class");
-            assert_eq!(
-                verification_sop_class.uid_type,
-                dict_parser::UIDType::SopClass
-            );
+            assert_eq!(verification_sop_class.kind, dict_parser::Kind::SopClass);
         }
         Err(e) => assert!(false, e.to_string()),
     }

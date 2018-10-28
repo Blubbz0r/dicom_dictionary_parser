@@ -4,7 +4,7 @@ use std::io::Read;
 use std::path::Path;
 
 use DataElement;
-use UIDType;
+use Kind;
 use UID;
 
 use reqwest;
@@ -112,7 +112,7 @@ impl Parser {
 
     pub fn parse_unique_identifiers(&self) -> Result<Vec<UID>, Box<Error>> {
         let root = xmltree::Element::parse(self.part6_content.as_bytes())?;
-        let chapter_A_table_body = match Self::find_chapter_table_body(&root, "A") {
+        let chapter_a_table_body = match Self::find_chapter_table_body(&root, "A") {
             Some(element) => element,
             None => return Err(From::from("Unable to find chapter 'A' table body.")),
         };
@@ -120,7 +120,7 @@ impl Parser {
         let mut uids = Vec::new();
 
         // xml underneath chapter tbody is <tr><td><para></para></td><td>...</tr>
-        for tr in &chapter_A_table_body.children {
+        for tr in &chapter_a_table_body.children {
             let mut uid = UID::new();
             let mut counter = 0;
             for td in &tr.children {
@@ -144,35 +144,29 @@ impl Parser {
                     }
                     1 => uid.name = text.unwrap(),
                     2 => match text.unwrap().as_ref() {
-                        "Application Context Name" => {
-                            uid.uid_type = UIDType::ApplicationContextName
-                        }
-                        "Application Hosting Model" => {
-                            uid.uid_type = UIDType::ApplicationHostingModel
-                        }
-                        "Coding Scheme" => uid.uid_type = UIDType::CodingScheme,
-                        "DICOM UIDs as a Coding Scheme" => {
-                            uid.uid_type = UIDType::DicomUidsAsCodingScheme
-                        }
-                        "LDAP OID" => uid.uid_type = UIDType::LdapOid,
-                        "Mapping Resource" => uid.uid_type = UIDType::MappingResource,
-                        "Meta SOP Class" => uid.uid_type = UIDType::MetaSopClass,
-                        "Service Class" => uid.uid_type = UIDType::ServiceClass,
-                        "SOP Class" => uid.uid_type = UIDType::SopClass,
+                        "Application Context Name" => uid.kind = Kind::ApplicationContextName,
+                        "Application Hosting Model" => uid.kind = Kind::ApplicationHostingModel,
+                        "Coding Scheme" => uid.kind = Kind::CodingScheme,
+                        "DICOM UIDs as a Coding Scheme" => uid.kind = Kind::DicomUidsAsCodingScheme,
+                        "LDAP OID" => uid.kind = Kind::LdapOid,
+                        "Mapping Resource" => uid.kind = Kind::MappingResource,
+                        "Meta SOP Class" => uid.kind = Kind::MetaSopClass,
+                        "Service Class" => uid.kind = Kind::ServiceClass,
+                        "SOP Class" => uid.kind = Kind::SopClass,
                         "Synchronization Frame of Reference" => {
-                            uid.uid_type = UIDType::SynchronizationFrameOfReferences
+                            uid.kind = Kind::SynchronizationFrameOfReferences
                         }
-                        "Transfer Syntax" => uid.uid_type = UIDType::TransferSyntax,
+                        "Transfer Syntax" => uid.kind = Kind::TransferSyntax,
                         "Well-known frame of reference" => {
-                            uid.uid_type = UIDType::WellKnownFrameOfReference
+                            uid.kind = Kind::WellKnownFrameOfReference
                         }
                         "Well-known Printer SOP Instance" => {
-                            uid.uid_type = UIDType::WellKnownPrinterSopInstance
+                            uid.kind = Kind::WellKnownPrinterSopInstance
                         }
                         "Well-known Print Queue SOP Instance" => {
-                            uid.uid_type = UIDType::WellKnownPrintQueueSopInstance
+                            uid.kind = Kind::WellKnownPrintQueueSopInstance
                         }
-                        "Well-known SOP Instance" => uid.uid_type = UIDType::WellKnownSopInstance,
+                        "Well-known SOP Instance" => uid.kind = Kind::WellKnownSopInstance,
                         val @ _ => return Err(From::from(format!("Unknown UID type '{}'", val))),
                     },
                     3 => { /* "Part" column, which we ignore right now */ }
