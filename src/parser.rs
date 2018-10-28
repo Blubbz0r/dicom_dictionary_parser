@@ -110,6 +110,18 @@ impl Parser {
         self.parse_data_elements("8")
     }
 
+    /// Returns all unique identifiers defined in the "Registry of DICOM Unique
+    /// Identifiers (UIDs)" table of the DICOM standard.
+    ///
+    /// # Errors
+    ///
+    /// This function fails if:
+    ///
+    /// * Parsing of the part6.xml fails
+    ///   * The table element of the "Registry of DICOM Unique Identifiers
+    /// (UIDs)" chapter cannot be found
+    ///   * The format of how values are stored in part6.xml has changed and this
+    /// function is no longer able to parse it appropriately
     pub fn parse_unique_identifiers(&self) -> Result<Vec<UID>, Box<Error>> {
         let root = xmltree::Element::parse(self.part6_content.as_bytes())?;
         let chapter_a_table_body = match Self::find_chapter_table_body(&root, "A") {
