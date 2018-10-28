@@ -156,7 +156,10 @@ impl Parser {
                         // we'll trim them out
                         uid.value = uid.value.replace("\u{200b}", "");
                     }
-                    1 => uid.name = text.unwrap(),
+                    1 => {
+                        uid.full_name = text.unwrap();
+                        uid.normalized_name = Self::normalize_uid_name(&uid.full_name);
+                    }
                     2 => match text.unwrap().as_ref() {
                         "Application Context Name" => uid.kind = Kind::ApplicationContextName,
                         "Application Hosting Model" => uid.kind = Kind::ApplicationHostingModel,
@@ -296,5 +299,49 @@ impl Parser {
         let mut content = String::new();
         reader.read_to_string(&mut content)?;
         Ok(content)
+    }
+
+    fn normalize_uid_name(full_uid_name: &str) -> String {
+        let mut normalized_uid_name = full_uid_name.to_owned();
+        if normalized_uid_name.contains(":") {
+            let colon_index = normalized_uid_name.find(":").unwrap();
+            normalized_uid_name.split_off(colon_index);
+            normalized_uid_name.shrink_to_fit();
+        }
+
+        if normalized_uid_name.contains(" (Retired)") {
+            normalized_uid_name = normalized_uid_name.replace(" (Retired)", "");
+        }
+
+        normalized_uid_name
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn normalize_uid_name_doesnt_change_input_without_colon_or_retired() {
+        assert_eq!(
+            Parser::normalize_uid_name("Test String"),
+            "Test String".to_owned()
+        );
+    }
+
+    #[test]
+    fn normalize_uid_name_strips_everything_starting_at_colon() {
+        assert_eq!(
+            Parser::normalize_uid_name("Test String: With a colon"),
+            "Test String".to_owned()
+        );
+    }
+
+    #[test]
+    fn normalize_uid_name_removes_retired() {
+        assert_eq!(
+            Parser::normalize_uid_name("Test String (Retired)"),
+            "Test String".to_owned()
+        );
     }
 }

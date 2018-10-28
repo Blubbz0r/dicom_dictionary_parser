@@ -175,11 +175,18 @@ fn parse_unique_identifier_registry_from_file() {
         Ok(uids) => {
             assert_eq!(uids.len(), 400);
 
-            let explicit_vr_little_endian = &uids[2];
-            assert_eq!(explicit_vr_little_endian.value, "1.2.840.10008.1.2.1");
-            assert_eq!(explicit_vr_little_endian.name, "Explicit VR Little Endian");
+            let implicit_little_endian = &uids[1];
+            assert_eq!(implicit_little_endian.value, "1.2.840.10008.1.2");
             assert_eq!(
-                explicit_vr_little_endian.kind,
+                implicit_little_endian.full_name,
+                "Implicit VR Little Endian: Default Transfer Syntax for DICOM"
+            );
+            assert_eq!(
+                implicit_little_endian.normalized_name,
+                "Implicit VR Little Endian"
+            );
+            assert_eq!(
+                implicit_little_endian.kind,
                 dict_parser::Kind::TransferSyntax
             );
         }
@@ -200,7 +207,11 @@ fn parse_unique_identifier_registry_from_downloaded_dict() {
             // checking some random element
             let verification_sop_class = &uids[0];
             assert_eq!(verification_sop_class.value, "1.2.840.10008.1.1");
-            assert_eq!(verification_sop_class.name, "Verification SOP Class");
+            assert_eq!(verification_sop_class.full_name, "Verification SOP Class");
+            assert_eq!(
+                verification_sop_class.normalized_name,
+                "Verification SOP Class"
+            );
             assert_eq!(verification_sop_class.kind, dict_parser::Kind::SopClass);
         }
         Err(e) => assert!(false, e.to_string()),
