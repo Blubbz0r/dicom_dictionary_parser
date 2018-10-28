@@ -4,6 +4,8 @@ use std::io::Read;
 use std::path::Path;
 
 use DataElement;
+use Kind;
+use UID;
 
 use reqwest;
 use xmltree;
@@ -104,8 +106,94 @@ impl Parser {
     /// Elements" chapter cannot be found
     ///   * The format of how values are stored in part6.xml has changed and this
     /// function is no longer able to parse it appropriately
-    pub fn parse_directory_structuring_elements(&self) -> Result<Vec<DataElement>, Box<Error>> {
+    pub fn parse_directory_structuring_element_registry(
+        &self,
+    ) -> Result<Vec<DataElement>, Box<Error>> {
         self.parse_data_elements("8")
+    }
+
+    /// Returns all unique identifiers defined in the "Registry of DICOM Unique
+    /// Identifiers (UIDs)" table of the DICOM standard.
+    ///
+    /// # Errors
+    ///
+    /// This function fails if:
+    ///
+    /// * Parsing of the part6.xml fails
+    ///   * The table element of the "Registry of DICOM Unique Identifiers
+    /// (UIDs)" chapter cannot be found
+    ///   * The format of how values are stored in part6.xml has changed and this
+    /// function is no longer able to parse it appropriately
+    pub fn parse_unique_identifier_registry(&self) -> Result<Vec<UID>, Box<Error>> {
+        let root = xmltree::Element::parse(self.part6_content.as_bytes())?;
+        let chapter_a_table_body = match Self::find_chapter_table_body(&root, "A") {
+            Some(element) => element,
+            None => return Err(From::from("Unable to find chapter 'A' table body.")),
+        };
+
+        let mut uids = Vec::new();
+
+        // xml underneath chapter tbody is <tr><td><para></para></td><td>...</tr>
+        for tr in &chapter_a_table_body.children {
+            let mut uid = UID::new();
+            let mut counter = 0;
+            for td in &tr.children {
+                let mut para = &td.children[0];
+                assert!(para.name == "para");
+
+                if !para.children.is_empty() && &para.children[0].name == "emphasis" {
+                    // some text is italic and thus has an extra "emphasis" sub-element...
+                    para = &para.children[0];
+                }
+
+                let text = para.text.clone();
+
+                match counter {
+                    0 => {
+                        uid.value = text.unwrap();
+
+                        // values in "UID Value" column contain zero-width spaces...
+                        // we'll trim them out
+                        uid.value = uid.value.replace("\u{200b}", "");
+                    }
+                    1 => uid.name = text.unwrap(),
+                    2 => match text.unwrap().as_ref() {
+                        "Application Context Name" => uid.kind = Kind::ApplicationContextName,
+                        "Application Hosting Model" => uid.kind = Kind::ApplicationHostingModel,
+                        "Coding Scheme" => uid.kind = Kind::CodingScheme,
+                        "DICOM UIDs as a Coding Scheme" => uid.kind = Kind::DicomUidsAsCodingScheme,
+                        "LDAP OID" => uid.kind = Kind::LdapOid,
+                        "Mapping Resource" => uid.kind = Kind::MappingResource,
+                        "Meta SOP Class" => uid.kind = Kind::MetaSopClass,
+                        "Service Class" => uid.kind = Kind::ServiceClass,
+                        "SOP Class" => uid.kind = Kind::SopClass,
+                        "Synchronization Frame of Reference" => {
+                            uid.kind = Kind::SynchronizationFrameOfReferences
+                        }
+                        "Transfer Syntax" => uid.kind = Kind::TransferSyntax,
+                        "Well-known frame of reference" => {
+                            uid.kind = Kind::WellKnownFrameOfReference
+                        }
+                        "Well-known Printer SOP Instance" => {
+                            uid.kind = Kind::WellKnownPrinterSopInstance
+                        }
+                        "Well-known Print Queue SOP Instance" => {
+                            uid.kind = Kind::WellKnownPrintQueueSopInstance
+                        }
+                        "Well-known SOP Instance" => uid.kind = Kind::WellKnownSopInstance,
+                        val @ _ => return Err(From::from(format!("Unknown UID type '{}'", val))),
+                    },
+                    3 => { /* "Part" column, which we ignore right now */ }
+                    _ => return Err(From::from("Found unexpected number of 'td' elements")),
+                }
+
+                counter += 1;
+            }
+
+            uids.push(uid);
+        }
+
+        Ok(uids)
     }
 
     fn download_part_6() -> Result<String, Box<Error>> {
@@ -130,7 +218,7 @@ impl Parser {
 
         let mut data_elements = Vec::new();
 
-        // xml underneath chapter 6 tbody is <tr><td><para></para></td><td>...</tr>
+        // xml underneath chapter tbody is <tr><td><para></para></td><td>...</tr>
         for tr in &chapter_table_body.children {
             let mut data_element = DataElement::new();
             let mut counter = 0;
