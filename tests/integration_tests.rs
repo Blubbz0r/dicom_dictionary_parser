@@ -186,3 +186,26 @@ fn parse_unique_identifiers_from_file() {
         Err(e) => assert!(false, e.to_string()),
     }
 }
+
+#[test]
+fn parse_unique_identifiers_from_downloaded_dict() {
+    let parser = dict_parser::Parser::new().unwrap();
+    match parser.parse_unique_identifiers() {
+        Ok(uids) => {
+            // 100 is pretty random... just checking that we have
+            // successfully parsed quite a bit of data. exact test
+            // is done against an actual xml file above
+            assert!(uids.len() > 100);
+
+            // checking some random element
+            let verification_sop_class = &uids[0];
+            assert_eq!(verification_sop_class.value, "1.2.840.10008.1.1");
+            assert_eq!(verification_sop_class.name, "Verification SOP Class");
+            assert_eq!(
+                verification_sop_class.uid_type,
+                dict_parser::UIDType::SopClass
+            );
+        }
+        Err(e) => assert!(false, e.to_string()),
+    }
+}
