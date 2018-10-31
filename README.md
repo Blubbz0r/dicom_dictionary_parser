@@ -8,7 +8,7 @@
 A Rust library that allows to parse the various elements defined in DICOM 
 standard part 6.
 
-Full documentation can be found [here](https://docs.rs/dicom_dictionary_parser/0.1.0/dicom_dictionary_parser/).
+Full documentation can be found [here](https://docs.rs/dicom_dictionary_parser).
 
 ## Usage
 
