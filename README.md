@@ -16,7 +16,7 @@ Add this to your 'Cargo.toml':
 
 ```toml
 [dependencies]
-dicom_dictionary_parser = "0.1.0"
+dicom_dictionary_parser = "0.2.0"
 ```
 
 and this to your crate root:
