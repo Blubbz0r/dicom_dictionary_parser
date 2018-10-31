@@ -5,12 +5,10 @@
 [![Documentation](https://docs.rs/dicom_dictionary_parser/badge.svg)](https://docs.rs/dicom_dictionary_parser)
 [![Crates.io](https://img.shields.io/crates/l/dicom_dictionary_parser.svg)](https://crates.io/crates/dicom_dictionary_parser)
 
-A Rust library that allows to parse the various elements defined in DICOM standard
-part 6. It returns a simple data structure representing the definitions that
-can be used to e.g. automatically generate a dictionary source file with all
-elements currently defined by the DICOM standard. It is necessary to
-automatically generate such files due to the sheer amount of elements defined
-by the DICOM standard (thousands).
+A Rust library that allows to parse the various elements defined in DICOM 
+standard part 6.
+
+Full documentation can be found [here](https://docs.rs/dicom_dictionary_parser/0.1.0/dicom_dictionary_parser/).
 
 ## Usage
 
