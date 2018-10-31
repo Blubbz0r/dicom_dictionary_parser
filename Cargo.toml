@@ -1,7 +1,7 @@
 [package]
 name = "dicom_dictionary_parser"
 description = "Library that parses the data dictionary (part 6) of the DICOM standard and provides access to all data elements"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Robert Habrich <r.habrich@googlemail.com>"]
 license = "MIT"
 keywords = ["dicom"]
