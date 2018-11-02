@@ -4,6 +4,7 @@
 [![Crates.io](https://img.shields.io/crates/v/dicom_dictionary_parser.svg)](https://crates.io/crates/dicom_dictionary_parser)
 [![Documentation](https://docs.rs/dicom_dictionary_parser/badge.svg)](https://docs.rs/dicom_dictionary_parser)
 [![Crates.io](https://img.shields.io/crates/l/dicom_dictionary_parser.svg)](https://crates.io/crates/dicom_dictionary_parser)
+[![dependency status](https://deps.rs/repo/github/Blubbz0r/dicom_dictionary_parser/status.svg)](https://deps.rs/repo/github/Blubbz0r/dicom_dictionary_parser)
 
 A Rust library that allows to parse the various elements defined in DICOM 
 standard part 6.
