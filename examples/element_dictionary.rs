@@ -1,3 +1,27 @@
+// This example shows how to generate a Rust source file that acts as a
+// dictionary providing functions for the various data elements and file meta
+// elements.
+//
+// The resulting "dictionary.rs" file will look like this (imagine that "Tag"
+// is a struct holding group and element as u16):
+// ```
+// // File Meta Elements
+//
+// pub fn file_meta_information_group_length() -> Tag {
+//     Tag::new(0x0002, 0x0000)
+// }
+//
+// // ... other file meta elements
+//
+// // Data Elements
+//
+// pub fn length_to_end() -> Tag {
+//     Tag::new(0x0008, 0x0001)
+// }
+//
+// // ... other data elements
+// ```
+
 extern crate dicom_dictionary_parser as dict_parser;
 
 use std::error::Error;
@@ -7,14 +31,6 @@ use std::io::BufWriter;
 
 fn main() -> Result<(), Box<Error>> {
     let parser = dict_parser::Parser::new()?;
-
-    write_dictionary(&parser)?;
-    write_sop_classes(&parser)?;
-
-    Ok(())
-}
-
-fn write_dictionary(parser: &dict_parser::Parser) -> Result<(), Box<Error>> {
     let file_meta_elements = parser.parse_file_meta_element_registry()?;
     let data_elements = parser.parse_data_element_registry()?;
 
@@ -32,32 +48,6 @@ fn write_dictionary(parser: &dict_parser::Parser) -> Result<(), Box<Error>> {
 
     buf_writer.write_all(b"// Data Elements\n\n")?;
     write_functions_for_data_elements(&mut buf_writer, &data_elements)?;
-
-    Ok(())
-}
-
-fn write_sop_classes(parser: &dict_parser::Parser) -> Result<(), Box<Error>> {
-    let uids = parser.parse_unique_identifier_registry()?;
-
-    let file = File::create("sop_classes.txt")?;
-    let mut buf_writer = BufWriter::new(file);
-
-    for uid in uids {
-        if uid.kind == dict_parser::Kind::SopClass {
-            let sop_class = uid
-                .normalized_name
-                .replace(" ", "")
-                .replace("-", "")
-                .replace("(Retired)", "")
-                .replace("(", "")
-                .replace(")", "")
-                .replace("/", "");
-
-            if !sop_class.is_empty() {
-                buf_writer.write_all(format!("{},\n", sop_class).as_bytes())?;
-            }
-        }
-    }
 
     Ok(())
 }
