@@ -5,7 +5,12 @@
 //! * "Registry of DICOM Directory Structuring Elements"
 //! * "Registry of DICOM Unique Identifiers (UIDs)"
 //!
-//! # Example - Writing data elements to file
+//! # Examples
+//!
+//! Various usage examples can be found in the "examples" subdirectory of the
+//! repository.
+//!
+//! ## Writing data elements to file
 //!
 //! ```rust,no_run
 //! extern crate dicom_dictionary_parser as dict_parser;
